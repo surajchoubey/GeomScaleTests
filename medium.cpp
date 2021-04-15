@@ -1,59 +1,56 @@
-#include<iostream>
-#include<fstream>
-#include<cmath>
-#include<random>
+#include <iostream>
+#include <fstream>
+#include <bits/stdc++.h>
+
+#define pi 3.141592
+#define epsilon 1e-6
+// can also use M_PI
+
 using namespace std;
 
-#define PI 3.1416
-
-double randomizer(double lowerLimit, double upperLimit){
-    double rdno = (double)(rand()) / (RAND_MAX) ;
-    return rdno*(upperLimit-lowerLimit);
+double probability_density_gaussian(double x, double mu, double sigma)
+{
+    // return the probability density of a sample from univariate gaussian
+    double ans = (double)exp(-pow((x - mu) / sigma, 2) / 2) / (sqrt(2 * pi));
+    return ans;
 }
 
-// ndf corresponds to normal density function with mean, variance, and x as usual parameters
-double ndf(double x, double mean, double variance) {
-    double y = (double)(1/(sqrt(2*PI)*variance)*exp(-pow((x-mean)/variance,2)/2));
-    return y;
-}
+void rejection_sampling(double mu, double sigma, int x_min, int x_max, int y_min = 0, int y_max = 0.5)
+{
+    // Store samples in output file
+    ofstream outfile;
+    outfile.open("data3.txt");
 
-void accept_reject_sampler(double mean, double variance, double x_min, double x_max, double y_min, double y_max) {    
+    // erf is the error function, used to calculate the normalising factor for truncated gaussian
+    double erf_x_max = erf((x_max - mu) / sigma);
+    double erf_x_min = erf((x_min - mu) / sigma);
+    cout << erf_x_max << " " << erf_x_min << endl;
 
-    // Randomized values will be mentioned here alongwith the result of getting accepted or rejected in medium_output.txt
-    fstream acc_rej_output;
-    acc_rej_output.open("medium_output.csv");
+    for (long long i = 0; i < 100000; ++i)
+    {
+        // uniformly sample a x-value
+        double rand_x = (double)x_min + (rand() % ((x_max - x_min + 1) * 100) / (double)100);
 
-    double p,q; // randomizing variables
+        // uniformly sample corresponding probability density
+        double rand_y = (double)y_min + (rand() % ((y_max - y_min + 1) * 100) / (double)100);
 
-    double accept_count=0;
-    double reject_count=0;
+        // actual probability density
+        double cdf_x = probability_density_gaussian(rand_x, mu, sigma) / (sigma * (erf_x_max - erf_x_min));
 
-    for(int i=0; i <= 10000 ; i++ ){
-
-        p=randomizer(x_min,x_max);
-        q=randomizer(y_min,y_max);
-
-        if(q<ndf(p,mean,variance)){
-            // ACCEPT
-            acc_rej_output << p << "," << q << "," << 1 << endl;
-            ++accept_count;
-        }else{
-            // REJECT
-            acc_rej_output << p << "," << q << "," << 0 << endl;
-            ++reject_count;
+        if (rand_y <= cdf_x)
+        {
+            // acceptable sample
+            outfile << rand_x << "," << rand_y << endl;
         }
     }
 
-    cout<<"Accepted area = "<<(x_max-x_min)*(y_max-y_min)*(accept_count/( accept_count + reject_count ))<< endl;
-    acc_rej_output.close();
-
+    outfile.close();
+    return;
 }
 
-int main(){
-
-    // Your values in the function should be looking like this for a standard normal density function
-    // accept_reject_sampler(mean, variance, x_min, x_max, y_min, y_max) and enter x_min, max numbers > 0
-    srand( (unsigned)time( NULL ) );
-    accept_reject_sampler(0.5, 0.5, 0, 1, 0, 1);
+int main()
+{
+    srand(time(0));
+    rejection_sampling(-0.5, 0.5, -3, 1);
     return 0;
 }

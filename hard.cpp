@@ -1,68 +1,71 @@
-#include<iostream>
-#include<fstream>
-#include<cmath>
-#include<random>
+#include <iostream>
+#include <fstream>
+#include <bits/stdc++.h>
+
+#define pi 3.141592
+#define epsilon 1e-6
+// can also use M_PI
+
 using namespace std;
 
-#define PI 3.1416
-
-double randomizer(double lowerLimit, double upperLimit){
-    double rdno = (double)(rand()) / (RAND_MAX) ;
-    return rdno*(upperLimit-lowerLimit);
+double proportional_probability_density_gaussian(double x, double mu, double sigma)
+{
+    //The Proportional Distribution used is the exponential part of the Univariate Truncated Gaussian
+    double ans = (double)exp(-pow((x - mu) / sigma, 2) / 2);
+    return ans;
 }
 
-// ndf corresponds to normal density function with mean, variance, and x as usual parameters
-double ndf(double x, double mean, double variance) {
-    double y = (double)(1/(sqrt(2*PI)*variance)*exp(-pow((x-mean)/variance,2)/2));
-    return y;
-}
+void metropolis_hastings(double mu, double sigma, int x_min, int x_max, int y_min = 0, int y_max = 0.5)
+{
+    // Writing sampled values to external file
+    ofstream outfile;
+    outfile.open("data1.txt");
 
-void metropolis_hastings(double mean, double variance, double x_min, double x_max, double y_min, double y_max) {    
+    // sample generator from the in-built normal distribution
+    default_random_engine e(0);
 
-    // Randomized values will be mentioned here alongwith the result of getting accepted or rejected in medium_output.txt
-    fstream metro_hast_output;
-    metro_hast_output.open("hard_output.csv");
+    // Initialising a random state for x between x_min and x_max
+    double rand_x = (double)x_min + (rand() % ((x_max - x_min + 1) * 100) / (double)100);
 
-    double p,q,r; // randomizing variables
+    // Total accepted transitions, ideally this value should correspond to 50% for the case of univariate gaussian
+    int jumps = 0;
 
-    double accept_count=0;
-    double reject_count=0;
-    double previous=0;
+    // sampling for 10000 samples
+    for (long long i = 0; i < 10000; ++i)
+    {
+        // transition distribution chosen is a univariate gaussian centred at previous sample
+        normal_distribution<double> jumping_distribution(rand_x, 2);
 
-    for(int i=0; i <= 10000 ; i++ ){
-
-        p=randomizer(x_min,x_max);
-        q=randomizer(y_min,y_max);
-        r=randomizer(0,1);
-
-        if(q<ndf(p,mean,variance)){
-            if(q >= previous){
-                // ACCEPT
-                previous=q;
-                metro_hast_output << p << "," << q << endl ;//<< "," << 1 << endl;
-            }else if(r < previous/q){
-                // ACCEPT
-                previous=q;
-                metro_hast_output << p << "," << q << endl ;//<< "," << 1 << endl;
-            }else{
-                continue;
-            }
+        // sample a new value
+        double rand_x_new = x_max + 1;
+        while (rand_x_new < x_min || rand_x_new > x_max)
+        {
+            rand_x_new = jumping_distribution(e);
         }
-        else{
-            // REJECT
-            // metro_hast_output << p << "," << q << "," << 0 << endl;
+
+        double alpha = proportional_probability_density_gaussian(rand_x_new, mu, sigma) / proportional_probability_density_gaussian(rand_x, mu, sigma);
+
+        // sample from U(0, 1)
+        double u = (rand() % 101) / (double)100;
+
+        if (u <= alpha)
+        {
+            // acceptable transition
+            rand_x = rand_x_new;
+            jumps += 1;
         }
+
+        outfile << rand_x << endl;
     }
 
-    metro_hast_output.close();
-
+    cout << (double)jumps * 100 / 10000;
+    outfile.close();
+    return;
 }
 
-int main(){
-
-    // Your values in the function should be looking like this for a standard normal density function
-    // accept_reject_sampler(mean, variance, x_min, x_max, y_min, y_max) and enter x_min, max numbers > 0
-    srand( (unsigned)time( NULL ) );
-    metropolis_hastings(0.5, 0.5, 0, 1, 0, 1);
+int main()
+{
+    srand(time(0));
+    metropolis_hastings(0, 1, -5, 5);
     return 0;
 }
