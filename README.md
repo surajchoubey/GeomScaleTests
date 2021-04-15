@@ -3,29 +3,11 @@
 ### 1. Easy
 
 * 
-*
-*
-
-Output:
-```
-```
 
 ### 2. Medium
 
-*
-*
-*
-
-Output:
-```
-```
+* Implemented Accept-Reject Sampling in a gaussian curve.
 
 ### 3. Hard
 
-*
-*
-*
-
-Output:
-```
-```
+* Implemented Metropolis Hasting algorithm to regenerate a curve.
