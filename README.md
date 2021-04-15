@@ -15,3 +15,4 @@
 ### 3. Hard
 
 * Implemented Metropolis Hasting algorithm to regenerate a curve.
+* The sample points have been written to hard_output.csv
