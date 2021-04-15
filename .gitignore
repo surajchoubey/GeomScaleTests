@@ -1,3 +1,2 @@
-.git
-.vscode
-./a.out
+.vscode/
+a.out
