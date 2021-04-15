@@ -12,31 +12,35 @@ double density_function(double x, double mu, double sigma)
     return y;
 }
 
-void rejection_sampling(double mu, double sigma, int x_min, int x_max, int y_min = 0, int y_max = 1)
+void rejection_sampling(double mu, double sigma, int x_min, int x_max, int y_min = 0, int y_max = 0.5)
 {
-    // Storing samples in medium_output.csv
-    ofstream myfile;
-    myfile.open("medium_output.csv");
+    // Store samples in output file
+    ofstream outfile;
+    outfile.open("medium_output.csv");
 
     // erf is the error function, used to calculate the normalising factor for truncated gaussian
     double erf_x_max = erf((x_max - mu) / sigma);
     double erf_x_min = erf((x_min - mu) / sigma);
 
-    for (long i = 0; i < 10; ++i)
+    for (long long i = 0; i < 100000; ++i)
     {
+        // uniformly sample a x-value
         double rand_x = (double)x_min + (rand() % ((x_max - x_min + 1) * 100) / (double)100);
 
+        // uniformly sample corresponding probability density
         double rand_y = (double)y_min + (rand() % ((y_max - y_min + 1) * 100) / (double)100);
 
+        // actual probability density
         double cdf_x = density_function(rand_x, mu, sigma) / (sigma * (erf_x_max - erf_x_min));
 
         if (rand_y <= cdf_x)
         {
-            myfile << rand_x << "," << rand_y << endl;
+            // acceptable sample
+            outfile << rand_x << "," << rand_y << endl;
         }
     }
 
-    myfile.close();
+    outfile.close();
     return;
 }
 
